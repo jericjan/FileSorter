@@ -4,9 +4,13 @@ from tkinter.ttk import *
 import glob
 import os
 import shutil
+import custom_vlc
 from custom_vlc import Player as vlcPlayer
 from send2trash import send2trash
 from ttkthemes import ThemedTk
+import importlib
+
+
 
 def browse_source():
     # Allow user to select a directory and store it in global var
@@ -48,6 +52,11 @@ def go():
     
 #window=Tk()
 window  = ThemedTk(theme='radiance')
+
+if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
+    import pyi_splash
+    pyi_splash.update_text('UI Loaded ...')
+    pyi_splash.close()
 # add widgets here
 def leftKey(event):
     print("Left key pressed")
