@@ -7,8 +7,8 @@ block_cipher = None
 a = Analysis(
     ['main.py'],
     pathex=["C:\\Program Files\\VideoLAN\\VLC\\","C:\\Users\\USER\\Desktop\\JJ\\python\\file sorter\\venv\\Lib\\site-packages"],
-    binaries=[("C:/Program Files/VideoLAN/VLC/plugins/*", "plugins")],
-    datas=[],
+    binaries=[],
+    datas=[("filesorter.ico",".")],
     hiddenimports=['vlc'],
     hookspath=[],
     hooksconfig={},
@@ -28,6 +28,7 @@ splash = Splash(
     text_size=12,
     minify_script=True,
     always_on_top=True,
+	text_color='black'	
 )
 
 exe = EXE(

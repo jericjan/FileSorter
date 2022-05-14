@@ -1,5 +1,8 @@
 venv/
 __pycache__/
 git.lnk
+venv.lnk
 compiled/
 FileSorter.exe
+FileSorter.zip
+saved_paths.json

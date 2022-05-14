@@ -173,27 +173,27 @@ class Player(Tk.Frame):
 
         # Menu Bar
         #   File Menu
-        menubar = Tk.Menu(self.parent)
-        self.parent.config(menu=menubar)
+        # menubar = Tk.Menu(self.parent)
+        # self.parent.config(menu=menubar)
 
-        fileMenu = _Tk_Menu(menubar)
-        fileMenu.bind_shortcuts_to(parent)  # XXX must be root?
-
-        fileMenu.add_shortcut("Open...", 'o', self.OnOpen)
-        fileMenu.add_separator()
-        fileMenu.add_shortcut("Play", 'p', self.OnPlay)  # Play/Pause
-        fileMenu.add_command(label="Stop", command=self.OnStop)
-        fileMenu.add_separator()
-        fileMenu.add_shortcut("Mute", 'm', self.OnMute)
-        fileMenu.add_separator()
-        fileMenu.add_shortcut("Close", 'w' if _isMacOS else 's', self.OnClose)
-        if _isMacOS:  # intended for and tested on macOS
-            fileMenu.add_separator()
-            fileMenu.add_shortcut("Full Screen", 'f', self.OnFullScreen)
-        menubar.add_cascade(label="File", menu=fileMenu)
-        self.fileMenu = fileMenu
-        self.playIndex = fileMenu.index("Play")
-        self.muteIndex = fileMenu.index("Mute")
+        # fileMenu = _Tk_Menu(menubar)
+        # fileMenu.bind_shortcuts_to(parent)  # XXX must be root?
+        
+        # fileMenu.add_shortcut("Open...", 'o', self.OnOpen)
+        # fileMenu.add_separator()
+        # fileMenu.add_shortcut("Play", 'p', self.OnPlay)  # Play/Pause
+        # fileMenu.add_command(label="Stop", command=self.OnStop)
+        # fileMenu.add_separator()
+        # fileMenu.add_shortcut("Mute", 'm', self.OnMute)
+        # fileMenu.add_separator()
+        # fileMenu.add_shortcut("Close", 'w' if _isMacOS else 's', self.OnClose)
+        # if _isMacOS:  # intended for and tested on macOS
+            # fileMenu.add_separator()
+            # fileMenu.add_shortcut("Full Screen", 'f', self.OnFullScreen)
+        # menubar.add_cascade(label="File", menu=fileMenu)
+        # self.fileMenu = fileMenu
+        # self.playIndex = fileMenu.index("Play")
+        # self.muteIndex = fileMenu.index("Mute")
 
         # first, top panel shows video
 
@@ -324,7 +324,7 @@ class Player(Tk.Frame):
         self.volMuted = m = not self.volMuted  # self.player.audio_get_mute()
         self.player.audio_set_mute(m)
         u = "Unmute" if m else "Mute"
-        self.fileMenu.entryconfig(self.muteIndex, label=u)
+        # self.fileMenu.entryconfig(self.muteIndex, label=u)
         self.muteButton.config(text=u)
         # update the volume slider text
         self.OnVolume()
@@ -347,7 +347,7 @@ class Player(Tk.Frame):
         # re-label menu item and button, adjust callbacks
         p = 'Pause' if playing else 'Play'
         c = self.OnPlay if playing is None else self.OnPause
-        self.fileMenu.entryconfig(self.playIndex, label=p, command=c)
+        # self.fileMenu.entryconfig(self.playIndex, label=p, command=c)
         # self.fileMenu.bind_shortcut('p', c)  # XXX handled
         self.playButton.config(text=p, command=c)
         self._stopped = False
