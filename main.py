@@ -10,6 +10,7 @@ from send2trash import send2trash
 from ttkthemes import ThemedTk
 import importlib
 import json
+import sys
 
 class ToolTip:
     def __init__(self,widget,text=None):
