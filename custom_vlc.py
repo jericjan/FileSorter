@@ -1,3 +1,4 @@
+#taken from http://git.videolan.org/?p=vlc/bindings/python.git;a=blob_plain;f=examples/tkvlc.py;hb=HEAD
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 
@@ -45,6 +46,10 @@ from os.path import basename, expanduser, isfile, join as joined
 from pathlib import Path
 import time
 
+from image_handler import myImage
+from mutagen import File as mutaFile
+from io import BytesIO
+from file_reader import read_my_binary
 _isMacOS   = sys.platform.startswith('darwin')
 _isWindows = sys.platform.startswith('win')
 _isLinux   = sys.platform.startswith('linux')
@@ -207,7 +212,8 @@ class Player(Tk.Frame):
         # self.buttons_panel.title("")
         self.is_buttons_panel_anchor_active = False
 
-        buttons = ttk.Frame(self.parent)
+        buttons = ttk.Frame(self.buttons_panel)
+        self.bottombarthing = buttons
         self.playButton = ttk.Button(buttons, text="Play", command=self.OnPlay)
         stop            = ttk.Button(buttons, text="Stop", command=self.OnStop)
         self.muteButton = ttk.Button(buttons, text="Mute", command=self.OnMute)
@@ -225,7 +231,8 @@ class Player(Tk.Frame):
 
 
         # panel to hold player time slider
-        timers = ttk.Frame(self.parent)
+        timers = ttk.Frame(self.buttons_panel)
+        self.dummytimer = timers
         self.timeVar = Tk.DoubleVar()
         self.timeSliderLast = 0
         self.timeSlider = Tk.Scale(timers, variable=self.timeVar, command=self.OnTime,
@@ -349,10 +356,12 @@ class Player(Tk.Frame):
         c = self.OnPlay if playing is None else self.OnPause
         # self.fileMenu.entryconfig(self.playIndex, label=p, command=c)
         # self.fileMenu.bind_shortcut('p', c)  # XXX handled
+
         self.playButton.config(text=p, command=c)
+
         self._stopped = False
 
-    def _Play(self, video):
+    def _Play(self, video, filetype=None):
         # helper for OnOpen and OnPlay
         if isfile(video):  # Creation
             m = self.Instance.media_new(str(video))  # Path, unicode
@@ -362,7 +371,30 @@ class Player(Tk.Frame):
             # set the window id where to render VLC's video output
             h = self.videopanel.winfo_id()  # .winfo_visualid()?
             if _isWindows:
-                self.player.set_hwnd(h)
+                if filetype is None or filetype == "video":
+                    self.player.set_hwnd(h)
+                elif filetype == "audio":
+                    self.canvas.destroy()
+                    file = mutaFile(str(video))
+                    try:
+                        for i in file.tags:
+                            if i.startswith("APIC:"):
+                                pogger_key = i
+                                break
+                        artwork = file.tags[pogger_key].data
+                        artwork = BytesIO(artwork)
+                        print(file.tags.keys())         
+                    except:
+                        print("Could not find album art.")
+                        if file.tags is not None:
+                            print("Tags found.")
+                            print(file.tags.keys())       
+                                    # with open('album_errorlog.txt', 'a', encoding="utf-8") as f:
+                                        # f.write(f"{i}: {getattr(file.tags,i)}\n")
+                        else:
+                            print("No tags found.")
+                        artwork = BytesIO(read_my_binary('mosic.png'))                      
+                    imagethingg = myImage(self.videopanel,artwork) 
             elif _isMacOS:
                 # XXX 1) using the videopanel.winfo_id() handle
                 # causes the video to play in the entire panel on
@@ -435,12 +467,21 @@ class Player(Tk.Frame):
     def OnStop(self, *unused):
         """Stop the player, resets media.
         """
-        if self.player:
-            self.player.stop()
-            self._Pause_Play(None)
-            # reset the time slider
-            self.timeSlider.set(0)
-            self._stopped = True
+        try:
+            if self.player:
+                self.player.stop()
+                self._Pause_Play(None)
+                # reset the time slider
+                self.timeSlider.set(0)
+                self._stopped = True              
+            self.canvas.destroy() 
+            self.videopanel.destroy()
+            self.bottombarthing.destroy()
+            self.volSlider.destroy()
+            self.timeSlider.destroy()
+            self.dummytimer.destroy()
+        except:
+            print("a funny occured")
         # XXX on macOS libVLC prints these error messages:
         # [h264 @ 0x7f84fb061200] get_buffer() failed
         # [h264 @ 0x7f84fb061200] thread_get_buffer() failed

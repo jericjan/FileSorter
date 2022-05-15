@@ -3,12 +3,13 @@
 
 block_cipher = None
 
+added_files = [("filesorter.ico","."),("mosic.png",".")]
 
 a = Analysis(
     ['main.py'],
     pathex=["C:\\Program Files\\VideoLAN\\VLC\\","C:\\Users\\USER\\Desktop\\JJ\\python\\file sorter\\venv\\Lib\\site-packages"],
     binaries=[],
-    datas=[("filesorter.ico",".")],
+    datas = added_files,
     hiddenimports=['vlc'],
     hookspath=[],
     hooksconfig={},
