@@ -11,5 +11,7 @@ For now, the preview window only works with audio, video, and photos.
 ## You can test it out for yourself here: https://github.com/jericjan/FileSorter/releases
 
 ### To-do:
-- better image support. (it lags)
-- text support
+- ~~better image support. (it lags)~~
+- ~~text support~~
+- clean up code
+- minimize file size
