@@ -1,5 +1,22 @@
 from tkinter import *
 from PIL import ImageTk, Image
+import threading
+import queue
+
+class ImageLoader(threading.Thread):
+    def __init__(self, canvas, queue, path):    
+        super().__init__()
+        self.canvas = canvas
+        self.queue = queue
+        self.path = path
+    def run(self):
+        self.img = ImageTk.PhotoImage(Image.open(self.path))
+        self.img_copy = Image.open(self.path)    
+        print(f"2. canvas id is: {self.canvas.winfo_id()}")
+        self.canvas_img = self.canvas.create_image(0, 0, image=self.img, anchor='nw')        
+        self.canvas.itemconfigure(self.canvas_img, state='hidden')
+        self.queue.put([self.img, self.img_copy])
+
 class myImage():
     def __init__(self, master, path):
     
@@ -12,23 +29,46 @@ class myImage():
     
         self.master = master
         self.path = path
-        self.img = ImageTk.PhotoImage(Image.open(path))
-        self.img_copy = Image.open(path)        
         self.canvas = Canvas(self.master)
-        self.canvas.pack(expand=True, fill=BOTH)     
-        self.canvas.create_image(0, 0, image=self.img, anchor='nw')
-        self.width = 0   
-        self.height = 0
-        self.zoomfactor = 1
-        if type(self.master).__name__ == "Frame":
-            self.master.update()
+        print(f"1. canvas id is: {self.canvas.winfo_id()}")
+        self.canvas.pack(expand=True, fill=BOTH)          
+        self.loadimg()
+      
+    
+    def loadimg(self):
+        self.queue = queue.Queue()
+        ImageLoader(self.canvas,self.queue,self.path).start()
+        self.master.after(100, self.process_img) 
+    
+    def process_img(self):
+        try:
+            result = self.queue.get_nowait()
+            self.img = result[0]
+            self.img_copy = result[1]
+            # self.canvas_img = result[2]
+            self.width = 0   
+            self.height = 0
+            self.zoomfactor = 1
+            # if type(self.master).__name__ == "Frame":
+                # print("master is a Frame.")
+                # self.master.update()
+            print(f"3. canvas id is: {self.canvas.winfo_id()}")    
             self.OnConfigure()
-        self.master.bind("<Configure>", self.OnConfigure)       
-        
+            # self.canvas.itemconfigure(self.canvas_img,state='normal')
+            self.master.bind("<Configure>", self.OnConfigure)             
+        except queue.Empty:
+            self.master.after(100, self.process_img)
     def OnStop(self):
-        self.canvas.destroy() 
-    def OnConfigure(self, pener=None):             
-            width = self.canvas.winfo_width()
+        try:
+            print("Destroying image")
+            self.canvas.destroy() 
+        except:
+            pass
+    def OnConfigure(self, pener=None):      
+            try:
+                width = self.canvas.winfo_width() 
+            except:
+                return # canvas has been deleted 
             height = self.canvas.winfo_height()
             stored_width = int(round(width * self.zoomfactor))
             stored_height = int(round(height * self.zoomfactor))

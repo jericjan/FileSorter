@@ -363,6 +363,44 @@ class Player(Tk.Frame):
 
     def _Play(self, video, filetype=None):
         # helper for OnOpen and OnPlay
+        
+        children = self.master.winfo_children()
+        count = 0
+        for i in children:    
+            classname = f'{i.__class__.__module__}.{i.__class__.__qualname__}'
+            # print("1",classname,i.winfo_id())
+            if classname == "custom_vlc.Player":
+                count += 1
+        print(count, "players found")        
+        deleted = 0         
+        if count > 1:   
+            amountToDelete = count - 1                  
+            destroyNext = False
+            numFramestoDestroy = 0
+            for i in children:               
+                classname = f'{i.__class__.__module__}.{i.__class__.__qualname__}'                
+
+                if classname == "custom_vlc.Player":         
+                    if deleted < amountToDelete:
+                        destroyNext = True
+                        numFramestoDestroy = 3
+                        i.destroy()
+                        i.player.stop()
+                        # print("deleted one")
+                        deleted += 1
+                elif destroyNext == True and numFramestoDestroy > 0:
+                    numFramestoDestroy -= 1
+                    i.destroy()
+                elif numFramestoDestroy == 0:    
+                    destroyNext = False
+                    
+        if deleted != 0:
+            print(f"Deleted {deleted} Players")
+            children = self.master.winfo_children()
+            for i in children:    
+                classname = f'{i.__class__.__module__}.{i.__class__.__qualname__}'
+                # print("2",classname,i.winfo_id())
+        
         if isfile(video):  # Creation
             m = self.Instance.media_new(str(video))  # Path, unicode
             self.player.set_media(m)
@@ -463,31 +501,68 @@ class Player(Tk.Frame):
                     w = round(float(h) * u / v)
                 # self.parent.geometry("%sx%s+%s+%s" % (w, h, x, y))
                 # self._geometry = self.parent.geometry()  # actual
+        
 
     def OnStop(self, *unused):
         """Stop the player, resets media.
         """
-        try:
-            if self.player:
-                self.player.stop()
-                self._Pause_Play(None)
-                # reset the time slider
-                self.timeSlider.set(0)
-                self._stopped = True              
-            self.canvas.destroy() 
-            self.videopanel.destroy()
-            self.bottombarthing.destroy()
-            self.volSlider.destroy()
-            self.timeSlider.destroy()
-            self.dummytimer.destroy()
-        except:
-            print("a funny occured")
+
+               
+        if self.player:
+            # self.player.stop()
+            # self._Pause_Play(None)
+            # # reset the time slider
+            # self.timeSlider.set(0)
+            # self._stopped = True           
+            
+            # self.logging_exceptions(self.player.stop)
+            # self.logging_exceptions(self._Pause_Play,None)
+            # self.logging_exceptions(self.timeSlider.set,0)
+            # stopedd = self._stopped
+            # self.logging_exceptions(lambda: (stopedd := True))
+            
+
+            for idx , func in enumerate([self.player.stop,
+                         lambda: self._Pause_Play(None),
+                         lambda: self.timeSlider.set(0),
+                         lambda: (stopedd := True)]):
+                try:
+                    # print(f"running {idx}th function.")
+                    func()
+                except Exception as e:
+                    tb = e.__traceback__
+                    while tb is not None:        
+                        # print(f"({idx}) line {tb.tb_lineno}: {basename(tb.tb_frame.f_code.co_filename)} - {e}")
+                        tb = tb.tb_next
+                    
+        # self.logging_exceptions(self.canvas.destroy()) 
+        # self.logging_exceptions(self.videopanel.destroy())
+        # self.logging_exceptions(self.bottombarthing.destroy())
+        # self.logging_exceptions(self.volSlider.destroy())
+        # self.logging_exceptions(self.timeSlider.destroy())
+        # self.logging_exceptions(self.dummytimer.destroy())                    
+                    
+        for idx , func in enumerate([self.canvas.destroy,
+                     self.videopanel.destroy,
+                     self.bottombarthing.destroy,
+                     self.volSlider.destroy,
+                     self.timeSlider.destroy,
+                     self.dummytimer.destroy]):
+                     
+            try:
+                # print(f"running {idx}th function.")
+                func()
+            except Exception as e:
+                tb = e.__traceback__
+                while tb is not None:        
+                    # print(f"({idx}) line {tb.tb_lineno}: {basename(tb.tb_frame.f_code.co_filename)} - {e}")
+                    tb = tb.tb_next
         # XXX on macOS libVLC prints these error messages:
         # [h264 @ 0x7f84fb061200] get_buffer() failed
         # [h264 @ 0x7f84fb061200] thread_get_buffer() failed
         # [h264 @ 0x7f84fb061200] decode_slice_header error
         # [h264 @ 0x7f84fb061200] no frame!
-
+        self.destroy()
     def OnTick(self):
         """Timer tick, update the time slider to the video time.
         """

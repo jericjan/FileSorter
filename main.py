@@ -15,6 +15,7 @@ from mimetypes import guess_type
 from PIL import ImageTk, Image
 from image_handler import myImage
 from text_handler import myText
+
 class ToolTip:
     def __init__(self,widget,text=None):
         def on_enter(event):
@@ -138,8 +139,8 @@ if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
     pyi_splash.update_text('UI Loaded ...')
     pyi_splash.close()
 # add widgets here
-def leftKey(event):
-    print("Left key pressed")
+def leftReleased(event):
+    print("Left key released")
     listbox.xview_moveto(0)
     curr_index = listbox.curselection()
     if not curr_index:
@@ -164,8 +165,8 @@ def leftKey(event):
     items_selected()
     listbox.delete(curr_index)    
     
-def upKey(event):
-    print("Up key pressed")
+def upReleased(event):
+    print("Up key released")
     listbox.xview_moveto(0)
     curr_index = listbox.curselection()
     if not curr_index:
@@ -183,9 +184,11 @@ def upKey(event):
         new_index = curr_index-1        
     listbox.selection_set(new_index)
     listbox.activate(new_index)
+    listbox.see(new_index)
     items_selected()
-def rightKey(event):
-    print("Right key pressed")
+    
+def rightReleased(event):
+    print("Right key released")
     listbox.xview_moveto(0)
     curr_index = listbox.curselection()
     if not curr_index:
@@ -209,8 +212,8 @@ def rightKey(event):
     items_selected()
     listbox.delete(curr_index)
 
-def downKey(event):
-    print("Down key pressed")
+def downReleased(event):
+    print("Down key released")
     listbox.xview_moveto(0)
     curr_index = listbox.curselection()
     if not curr_index:
@@ -228,11 +231,23 @@ def downKey(event):
         new_index = curr_index+1 
     listbox.selection_set(new_index)
     listbox.activate(new_index)
+    listbox.see(new_index)
     items_selected()
-window.bind('<Left>', leftKey)
-window.bind('<Up>', upKey)
-window.bind('<Right>', rightKey)
-window.bind('<Down>', downKey)
+    
+# def upPressed(event):
+    # print("Up key pressed")    
+# def downPressed(event):
+    # print("Down key pressed")    
+# def leftPressed(event):
+    # print("Left key pressed")    
+# def rightPressed(event):
+    # print("Right key pressed")        
+window.bind('<KeyRelease-Left>', leftReleased)
+window.bind('<KeyRelease-Up>', upReleased)
+window.bind('<KeyRelease-Right>', rightReleased)
+window.bind('<KeyRelease-Down>', downReleased)
+
+
 top_part = Frame(window)
 top_part.pack(side=TOP,fill=X)
 frame1 = Frame(top_part)
@@ -294,6 +309,8 @@ ToolTip(button6,"Clear all saved paths")
 def path_selected(event=None):
     global dest_path
     selected_indices = paths_listbox.curselection()
+    if not selected_indices:
+        return
     with open("saved_paths.json") as file:
         json_decoded = json.load(file)
     path = json_decoded["paths"][selected_indices[0]]
@@ -413,12 +430,16 @@ class fakePlayer():
 player = fakePlayer()
 
 last_index = ""
+# saved_time = 1.1
 def items_selected(event= None):
 
     # get selected indices
     selected_indices = listbox.curselection()
+    if not selected_indices:
+        return    
     global last_index
     global player
+    global saved_time
     last_index = selected_indices[0]
     print(f"Setting {last_index} as the last index")
     # get selected items
@@ -429,21 +450,26 @@ def items_selected(event= None):
     parsed = guess_type(fullpath)
     print(f"MIME type:{parsed}")
     filetype = parsed[0].split('/')[0]
-    print(f"filetype: {filetype}")
     player.OnStop()
+    # passed_time = time.time() - saved_time
+    # if (passed_time) > 1:
+    # print(f"{passed_time} seconds passed")
     if filetype == "video" or filetype == "audio":
-        print("file is a video")
         player = vlcPlayer(window)        
         player._Play(fullpath,filetype)
     elif filetype == "image":   
             player = myImage(window,fullpath)   
     elif filetype == "text":
             player = myText(window,fullpath)   
-        
+        # saved_time = time.time()        
     
-
+print(window.winfo_children())
 
 listbox.bind('<<ListboxSelect>>', items_selected)    
+listbox.bind('<KeyPress-Left>',  lambda e: "break")
+listbox.bind('<KeyPress-Up>',  lambda e: "break")
+listbox.bind('<KeyPress-Right>',  lambda e: "break")
+listbox.bind('<KeyPress-Down>',  lambda e: "break")
 
 window.title('File sorter')
 window.iconbitmap(resource_path('filesorter.ico'))
