@@ -16,12 +16,13 @@ class ImageLoader(threading.Thread):
         self.path = path
 
     def run(self):
-        self.img = ImageTk.PhotoImage(Image.open(self.path))
-        self.img_copy = Image.open(self.path)
-        print(f"2. canvas id is: {self.canvas.winfo_id()}")
-        self.canvas_img = self.canvas.create_image(0, 0, image=self.img, anchor="nw")
-        self.canvas.itemconfigure(self.canvas_img, state="hidden")
-        self.queue.put([self.img, self.img_copy])
+        with Image.open(self.path) as file:
+            self.img = ImageTk.PhotoImage(file)
+            self.img_copy = file
+            print(f"2. canvas id is: {self.canvas.winfo_id()}")
+            self.canvas_img = self.canvas.create_image(0, 0, image=self.img, anchor="nw")
+            self.canvas.itemconfigure(self.canvas_img, state="hidden")
+            self.queue.put([self.img, self.img_copy])
 
 
 class myImage:

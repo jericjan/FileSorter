@@ -12,7 +12,7 @@ import sys
 from mimetypes import guess_type
 from ttkthemes import ThemedTk
 from send2trash import send2trash
-from custom_vlc import Player as vlcPlayer
+from custom_vlc import Player as VlcPlayer
 from image_handler import myImage
 from text_handler import myText
 
@@ -161,11 +161,8 @@ if "_PYIBoot_SPLASH" in os.environ and importlib.util.find_spec("pyi_splash"):
 
     pyi_splash.update_text("UI Loaded ...")
     pyi_splash.close()
-# add widgets here
-def leftReleased(event):
-    """When left key is released, send file to trash and move on to next file in the listbox"""
-    print("Left key released")
-    listbox.xview_moveto(0)
+
+def get_current_file_index():
     curr_index = listbox.curselection()
     if not curr_index:
         if last_index != "":
@@ -175,6 +172,14 @@ def leftReleased(event):
             return
     else:
         curr_index = curr_index[0]
+    return curr_index
+
+# add widgets here
+def trash_file(event):
+    """When left key is released, send file to trash and move on to next file in the listbox"""
+    print("Left key released")
+    listbox.xview_moveto(0)
+    curr_index = get_current_file_index()
     selected_file = listbox.get(curr_index)
     player.OnStop()
     fixed_path = f"{source_path.get()}/{selected_file}".replace("/", "\\")
@@ -190,19 +195,11 @@ def leftReleased(event):
     listbox.delete(curr_index)
 
 
-def upReleased(event):
+def nav_up(event):
     """Move to previous item in files listbox"""
     print("Up key released")
     listbox.xview_moveto(0)
-    curr_index = listbox.curselection()
-    if not curr_index:
-        if last_index != "":
-            curr_index = last_index
-        else:
-            print("No index previously selected.")
-            return
-    else:
-        curr_index = curr_index[0]
+    curr_index = get_current_file_index()
     listbox.selection_clear(curr_index)
     if curr_index == 0:
         new_index = curr_index
@@ -214,19 +211,11 @@ def upReleased(event):
     items_selected()
 
 
-def rightReleased(event):
+def move_file_to_dst(event):
     """When right key is released, send file to destination path and move on to next file in the listbox"""
     print("Right key released")
     listbox.xview_moveto(0)
-    curr_index = listbox.curselection()
-    if not curr_index:
-        if last_index != "":
-            curr_index = last_index
-        else:
-            print("No index previously selected.")
-            return
-    else:
-        curr_index = curr_index[0]
+    curr_index = get_current_file_index()
     selected_file = listbox.get(curr_index)
     player.OnStop()
     shutil.move(
@@ -243,19 +232,11 @@ def rightReleased(event):
     listbox.delete(curr_index)
 
 
-def downReleased(event):
+def nav_down(event):
     """Move to next item in files listbox"""
     print("Down key released")
     listbox.xview_moveto(0)
-    curr_index = listbox.curselection()
-    if not curr_index:
-        if last_index != "":
-            curr_index = last_index
-        else:
-            print("No index previously selected.")
-            return
-    else:
-        curr_index = curr_index[0]
+    curr_index = get_current_file_index()
     listbox.selection_clear(curr_index)
     if curr_index == listbox.size() - 1:
         new_index = curr_index
@@ -267,6 +248,10 @@ def downReleased(event):
     items_selected()
 
 
+def open_in_default_app(event):
+    curr_index = get_current_file_index()
+    selected_file = listbox.get(curr_index)
+    os.startfile(f"{source_path.get()}/{selected_file}")
 # def upPressed(event):
 # print("Up key pressed")
 # def downPressed(event):
@@ -275,10 +260,11 @@ def downReleased(event):
 # print("Left key pressed")
 # def rightPressed(event):
 # print("Right key pressed")
-window.bind("<KeyRelease-Left>", leftReleased)
-window.bind("<KeyRelease-Up>", upReleased)
-window.bind("<KeyRelease-Right>", rightReleased)
-window.bind("<KeyRelease-Down>", downReleased)
+window.bind("<KeyRelease-Left>", trash_file)
+window.bind("<KeyRelease-Up>", nav_up)
+window.bind("<KeyRelease-Right>", move_file_to_dst)
+window.bind("<KeyRelease-Down>", nav_down)
+window.bind("<KeyRelease-Return>", open_in_default_app)
 
 
 top_part = Frame(window)
@@ -357,7 +343,7 @@ inputtxt = Entry(frame1, width=50)
 inputtxt.grid(row=2, column=2)
 
 instructions = Label(
-    frame2, text="⬅ = trash item, ⬆ = previous item, ⬇ = next item, ➡ = move item"
+    frame2, text="⬅ = trash item, ⬆ = previous item, ⬇ = next item, ➡ = move item, Enter = open in default app"
 )
 instructions.pack(side="top")
 listbox = Listbox(frame2, listvariable=filenames, height=8, selectmode="single")
@@ -370,7 +356,7 @@ listbox["yscrollcommand"] = scrollbar.set
 scrollbar.pack(side="left", fill="both")
 
 
-class fakePlayer:
+class FakePlayer:
     """Used for when no player has been initialized"""
 
     def OnStop(self):
@@ -457,7 +443,7 @@ class fakePlayer:
 # self.widthchanged = True
 # else:
 # self.widthchanged = False
-player = fakePlayer()
+player = FakePlayer()
 
 last_index = ""
 
@@ -480,13 +466,17 @@ def items_selected(event=None):
     fullpath = f"{source_path.get()}/{selected_file}"
     parsed = guess_type(fullpath)
     print(f"MIME type:{parsed}")
-    filetype = parsed[0].split("/")[0]
-    player.OnStop()
+    filetype = parsed[0]
+    if filetype is None:
+        return
+    
+    filetype = filetype.split("/")[0]
+    player.OnStop()  # TODO: seems to have a bug where it doesn't remove the thing for unsupported files
     # passed_time = time.time() - saved_time
     # if (passed_time) > 1:
     # print(f"{passed_time} seconds passed")
     if filetype in ("video", "audio"):
-        player = vlcPlayer(window)
+        player = VlcPlayer(window)
         player._Play(fullpath, filetype)
     elif filetype == "image":
         player = myImage(window, fullpath)
